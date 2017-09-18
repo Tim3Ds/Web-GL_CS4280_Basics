@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>CS 4280: Computer Graphics</title>
+    <style>
+        canvas {
+            border: 1px solid red;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="webgl-scene" width="800" height="600">
+    Your browser does not support HTML5.
+  </canvas>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="webgl_helper.js"></script>
+    <!-- Vertex Shader -->
+    <script id='shader-vs' type='x-shader/x-vertex'>
+        attribute vec3 coordinates; 
+        attribute vec3 colors; 
+        attribute float alpha; 
+        varying vec4 vColor;
+        void main(void) { 
+            gl_Position = vec4(coordinates, 1.0); 
+            vColor = vec4(colors, alpha); 
+        }
+    </script>
+    <!-- Fragment Shader -->
+    <script id='shader-fs' type='x-shader/x-fragment'>
+        varying mediump 
+        vec4 vColor; 
+        void main(void) { 
+            gl_FragColor = vColor; 
+        }
+    </script>
+    <script>
+        $(document).ready(function() {
+            var canvas = $("#webgl-scene")[0];
+            var gl = initWebGL(canvas);
+            var program = initShaders(gl, $("#shader-vs").text(), $("#shader-fs").text());
+            gl.useProgram(program);
+            initBuffers(gl, program, [{
+                name: "coordinates",
+                size: 3,
+                data: [
+                    0.0, 0.5, 0.0, // vertex 
+                    Math.random(), Math.random(), Math.random(), //color
+                    Math.random(), // alpha
+                    0.5, -0.5, 0.0, // vertex 
+                    Math.random(), Math.random(), Math.random(), //color
+                    Math.random(), // alpha
+                    -0.5, -0.5, 0.0, // vertex 
+                    Math.random(), Math.random(), Math.random(), //color
+                    Math.random(), // alpha
+
+                ],
+                stride: 7,
+                offset: 0,
+            }, {
+                name: "colors",
+                size: 3,
+                stride: 7,
+                offset: 3,
+            }, {
+                name: "alpha",
+                size: 1,
+                stride: 7,
+                offset: 6,
+            }]);
+
+            clear(gl, [1.0, 1.0, 1.0, 1.0]);
+
+            gl.drawArrays(gl.TRIANGLES, 0, 3);
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>CS 2480: Computer Graphics</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id='webgl-scene' width='800' height='600'>
+		Your browser dose not support HTML 5
+    </canvas>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <!-- Vertex Shader -->
+    <script id="shader-vs" type="x-shader/x-vertex">
+        attribute vec3 coordinates; 
+        void main(void){ 
+            gl_Position = vec4(coordinates, 1.0); 
+            gl_PointSize = 5.0; 
+        }
+    </script>
+    <!-- Fragment Shader -->
+    <script id="shader-fs" type="x-shader/x-fragment">
+        void main(void){ 
+            gl_FragColor = vec4(0.7, 0.3, 1.0, 1.0);
+        }
+    </script>
+    <script src="./gl-Helper.js"></script>
+    <!-- canvas script -->
+    <script>
+        $(document).ready(() => {
+            var canvas = document.getElementById('webgl-scene');
+            var gl = initWebGL(canvas);
+            var program = initShaders(gl, $("#shader-vs").text(), $("#shader-fs").text())
+            
+            // Specify points array for buffer
+            var  points = [
+                -1.0,1.0,0.0
+            ];
+            var  vertices =[ 
+                0.0, 0.1, 0.0, 
+                0.1, -0.1, 0.0, 
+                -0.1, -0.1, 0.0,
+            ];
+            
+            initBuffers(gl, program, points);
+
+            // Get the attribute location
+            $('canvas').on('mouseup', (e)=>{
+                var rect = e.target.getBoundingClientRect();
+                // x = (2u - w)/w
+                var x = (2 * (e.clientX - rect.left) - rect.width) / rect.width;
+                // y = (h-3v)/h
+                var y = (rect.height - 2 * (e.clientY - rect.top)) / rect.height;
+                points.push(x,y,0);
+
+                // console.log(points);
+                
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(points), gl.STATIC_DRAW);
+                
+                gl.drawArrays(gl.POINTS, 0, points.length/3);
+            });
+
+            $('canvas').on('mousedown', (e)=>{
+                // var rect = e.target.getBoundingClientRect();
+                // // x = (2u - w)/w
+                // var x = (2 * (e.clientX - rect.left) - rect.width) / rect.width;
+                // // y = (h-3v)/h
+                // var y = (rect.height - 2 * (e.clientY - rect.top)) / rect.height;
+                // points.push(x,y,0);
+
+                // console.log(points);
+                
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+                
+                gl.drawArrays(gl.TRIANGLES, 0, 3);
+            });
+            
+            // render(gl);
+
+            gl.drawArrays(gl.POINTS, 0, points.length/3);
+            
+        })
+    </script>
+
+</body>
+
+</html>

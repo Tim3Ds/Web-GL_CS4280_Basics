@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>CS 2480: Computer Graphics</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+        input{
+            width: 800px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id='webgl-scene' width='800' height='600'>
+		Your browser dose not support HTML 5
+    </canvas>
+    <br/>
+    <input type="range" min="10" max="100000" name="range">
+
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <!-- Vertex Shader -->
+    <script id="shader-vs" type="x-shader/x-vertex">
+        attribute vec3 coordinates; 
+        void main(void){ 
+            gl_Position = vec4(coordinates, 1.0); 
+            gl_PointSize = 1.0; 
+        }
+    </script>
+    <!-- Fragment Shader -->
+    <script id="shader-fs" type="x-shader/x-fragment">
+        void main(void){ 
+            gl_FragColor = vec4(0.7, 0.3, 1.0, 1.0);
+        }
+    </script>
+    <script src="./gl-Helper.js"></script>
+    <!-- canvas script -->
+    <script>
+        $(document).ready(() => {
+            var canvas = document.getElementById('webgl-scene');
+            var gl = initWebGL(canvas);
+            var program = initShaders(gl, $("#shader-vs").text(), $("#shader-fs").text())
+            
+            triangle = [ 
+                1, -1, 0.0, 
+                0.0, 1, 1.0, 
+                -1, -1, 0.0,
+            ];
+            initBuffers(gl, program, triangle); 
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(triangle), gl.STATIC_DRAW);
+            gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+            triangle = [ 
+                [1, -1, 0.0], 
+                [0.0, 1, 1.0], 
+                [-1, -1, 0.0],
+            ];
+            // Specify points array for buffer
+            var  vertices = [];
+            
+            
+            $('input[name=range]').on('change', (e)=>{
+                //clear data
+                vertices = [];
+                
+                // // code for getting a point from click
+                // var rect = e.target.getBoundingClientRect();
+                // // x = (2u - w)/w
+                // var x = (2 * (e.clientX - rect.left) - rect.width) / rect.width;
+                // // y = (h-3v)/h
+                // var y = (rect.height - 2 * (e.clientY - rect.top)) / rect.height;
+                
+                // // add x y from click to array vertices
+                // p = [x, y, Math.random()];
+
+                // get random point
+                p = [Math.random(), Math.random(), Math.random()];
+
+                console.log($('input[name=range]').val());
+                for (num = 0;num<$('input[name=range]').val();num++){
+                    v = Math.floor(Math.random()*3);
+                    q = [((triangle[v][0]+p[0])/2), ((triangle[v][1]+p[1])/2), ((triangle[v][2]+p[2])/2)];
+                    vertices.push(((triangle[v][0]+p[0])/2), ((triangle[v][1]+p[1])/2), ((triangle[v][2]+p[2])/2));
+                    p = q;
+                }
+
+                console.log(vertices);
+                
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+                
+                gl.drawArrays(gl.POINTS, 0, vertices.length/3);
+            });
+
+            
+        })
+    </script>
+
+</body>
+
+</html>

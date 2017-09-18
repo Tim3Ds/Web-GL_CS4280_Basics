@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>CS 4280: Computer Graphics</title>
+  <style>canvas { border: 1px solid red; }</style>
+</head>
+
+<body>
+  <canvas id="webgl-scene" width="800" height="600">
+    Your browser does not support HTML5.
+  </canvas>
+
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+  <script src="webgl_helper.js"></script> 
+  <!-- Vertex Shader -->
+  <script id='shader-vsA' type='x-shader/x-vertex'>
+    attribute vec3 coordinates;
+    void main(void) {
+      gl_Position = vec4(coordinates, 1.0);
+      gl_PointSize = 5.0;
+    }
+  </script>
+  <script id='shader-vsB' type='x-shader/x-vertex'>
+    attribute vec3 coordinates;
+    void main(void) {
+      gl_Position = vec4(coordinates, 1.0);
+      gl_PointSize = 10.0;
+    }
+  </script>
+  <!-- Fragment Shader -->
+  <script id='shader-fsA' type='x-shader/x-fragment'>
+    void main(void) {
+      gl_FragColor = vec4(0.0, 0.0, 1.0, 1.0); 
+    }
+  </script>
+  <script id='shader-fsB' type='x-shader/x-fragment'>
+    void main(void) {
+      gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0); 
+    }
+  </script>
+  <script>
+    $(document).ready(function(){
+      var canvas = $("#webgl-scene")[0];
+      var gl = initWebGL(canvas);
+      var programA = initShaders(gl, $("#shader-vsA").text(), $("#shader-fsA").text());
+      var programB = initShaders(gl, $("#shader-vsB").text(), $("#shader-fsB").text());
+      
+      var toggle = true;
+      
+      canvas.onmouseup = function(e){
+        if(toggle){
+          gl.useProgram(programA);
+
+          // Pass coordinates to vertex shader
+          var coordinates = gl.getAttribLocation(programA, 'coordinates');  
+          gl.vertexAttrib3f(coordinates, 0.0, 0.0, 0.0);
+          toggle = false;
+        }else{
+          gl.useProgram(programB);
+
+          // Pass coordinates to vertex shader
+          var coordinates = gl.getAttribLocation(programB, 'coordinates');  
+          gl.vertexAttrib3f(coordinates, 0.0, 0.0, 0.0);
+          toggle = true;
+        }
+        var rect = e.target.getBoundingClientRect();
+        // x = (2u - w) / w
+        var x = (2 * (e.clientX - rect.left) - rect.width) / rect.width;
+        // y = (h - 2v) / h
+        var y = (rect.height - 2 * (e.clientY - rect.top)) / rect.height;
+
+        gl.vertexAttrib3f(coordinates, x, y, 0.0);
+        gl.drawArrays(gl.POINTS, 0, 1);
+      };
+
+      // clear 
+      clear(gl, [1.0, 1.0, 1.0, 1.0]);
+
+      // Render
+      gl.drawArrays(gl.POINTS, 0, 1);
+    });
+  </script>
+</body>
+
+</html>

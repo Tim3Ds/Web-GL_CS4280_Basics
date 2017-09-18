@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>CS 4280: Computer Graphics</title>
+  <style>canvas { 
+    position: absolute;
+    top: 0px;
+    border: 1px solid red; z-index: 5}</style>
+</head>
+
+<body>
+  <span></span>
+  <canvas id="webgl-scene" width="800" height="600">
+    Your browser does not support HTML5.
+  </canvas>
+
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script> 
+  <!-- Vertex Shader -->
+  <script id='shader-vs' type='x-shader/x-vertex'>
+    attribute vec3 coordinates;
+    void main(void) {
+      gl_Position = vec4(coordinates, 1.0);
+    }
+  </script>
+  <!-- Fragment Shader -->
+  <script id='shader-fs' type='x-shader/x-fragment'>
+    void main(void) {
+      gl_FragColor = vec4(0.0, 0.0, 1.0, 1.0); 
+    }
+  </script>
+  <script>
+    $(document).ready(function(){    
+      var canvas = $("#webgl-scene")[0];
+      var gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+
+      if (!gl) {
+        alert("Unable to initialize WebGL; your browser may not support it.");
+      }
+
+      // Process vertex shader
+      var vs_script = $("#shader-vs").text();
+      var v_shader = gl.createShader(gl.VERTEX_SHADER);
+      gl.shaderSource(v_shader, vs_script);
+      gl.compileShader(v_shader);
+
+      // Process fragment shader
+      var fs_script = $("#shader-fs").text();
+      var f_shader = gl.createShader(gl.FRAGMENT_SHADER);
+      gl.shaderSource(f_shader, fs_script);
+      gl.compileShader(f_shader);
+
+      // Create a shader program from both vertex and fragment shaders
+      var program = gl.createProgram();
+      gl.attachShader(program, v_shader);
+      gl.attachShader(program, f_shader);
+      gl.linkProgram(program);
+
+      gl.useProgram(program);
+
+      // Specify geometry
+      var  vertices =[ 
+        0.0, 0.1, 0.0, 
+        0.1, -0.1, 0.0, 
+        -0.1, -0.1, 0.0,
+      ];
+      var buffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+
+      // Get the attribute location
+      var coordinates = gl.getAttribLocation(program, "coordinates");
+      gl.vertexAttribPointer(coordinates, 3, gl.FLOAT, false, 0, 0); 
+      gl.enableVertexAttribArray(coordinates);
+
+      // Render
+      gl.clearColor(1.0, 1.0, 1.0, 1.0);
+      gl.enable(gl.DEPTH_TEST);
+      gl.depthFunc(gl.LEQUAL);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    });
+  </script>
+</body>
+
+</html>
