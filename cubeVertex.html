@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>CS 2480: Computer Graphics</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+        
+        input {
+            width: 800px;
+        }
+        
+        label {
+            display: inline-block;
+            width: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id='webgl-scene' width='800' height='800'>
+		Your browser dose not support HTML 5
+    </canvas>
+    
+
+    
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.4.0/gl-matrix.js"></script>
+    <!-- Vertex Shader -->
+    <script id="shader-vs1" type="x-shader/x-vertex">
+        attribute vec3 coordinates;
+        attribute vec3 colors;
+        attribute float alpha; 
+        varying vec4 vColor;
+        uniform mat4 translateXY;
+        void main(void){
+            gl_Position = translateXY * vec4(coordinates, 1.0);
+            vColor = vec4(colors, alpha); 
+        }
+    </script>
+    <!-- Fragment Shader -->
+    <script id="shader-fs1" type="x-shader/x-fragment">
+        varying mediump vec4 vColor; 
+        void main(void) { 
+            gl_FragColor = vColor; 
+        }
+    </script>
+    
+    <script src="./webgl_Helper.js"></script>
+    <!-- canvas script -->
+    <script>
+        $(document).ready(() => {
+            var canvas = $("#webgl-scene")[0];
+            var gl = initWebGL(canvas);
+            var program = initShaders(gl, $("#shader-vs1").text(), $("#shader-fs1").text());
+
+            gl.useProgram(program);
+
+            // var redRGBA = [1.0, 0.0, 0.0, Math.random()];
+            // var greenRGBA = [0.0, 1.0, 0.0, Math.random()];
+            // var blueRGBA = [0.0, 0.0, 1.0, Math.random()];
+            // var blackRGBA = [0.0, 0.0, 0.0, Math.random()];
+
+            color = [
+                [1.0, 0.0, 0.0, 0.8],
+                [0.0, 1.0, 0.0, 0.8],
+                [1.0, 0.3, 1.0, 0.8],
+                [0.0, 0.0, 1.0, 0.8],
+                [1.0, 0.0, 1.0, 0.8],
+                [0.0, 1.0, 1.0, 0.8],
+                [1.0, 1.0, 0.0, 0.8],
+            ]
+            
+            vertices = [
+                [-0.5, -0.5, 0.5], //v0
+                [0.5, -0.5, 0.5], //v1
+                [0.5, 0.5, 0.5], //v2
+                [-0.5, 0.5, 0.5], //v3
+                [-0.5, -0.5, -0.5], //v4
+                [0.5, -0.5, -0.5], //v5
+                [0.5, 0.5, -0.5], //v6
+                [-0.5, 0.5, -0.5], //v7
+            ];
+            var indices = [
+                0, 1, 2,
+                0, 2, 3,
+                1, 5, 6,
+                1, 6, 2,
+                2, 6, 7,
+                2, 7, 3,
+                3, 7, 4,
+                3, 4, 0,
+                4, 5, 6,
+                4, 6, 7,
+                0, 1, 5,
+                0, 5, 4,
+            ];
+
+            var data = []; 
+            var vertexCount = 0;
+            var sideCount = 0
+            indices.forEach(function(indice){
+                // console.log(vertices[indice]);
+                data = data.concat(vertices[indice], color[sideCount]);
+                // side counter 6 vertices per side
+                vertexCount++
+                if(vertexCount==6){
+                    sideCount++;
+                    vertexCount=0;
+                }
+            });
+
+            // console.log(data, count);
+            initBuffers(gl, program, [
+            {
+                name: "coordinates",
+                size: 3,
+                data: data,
+                stride: 7,
+                offset: 0,
+            }, {
+                name: "colors",
+                size: 3,
+                stride: 7,
+                offset: 3,
+            }, {
+                name: "alpha",
+                size: 1,
+                stride: 7,
+                offset: 6,
+            }
+            ]);
+
+            var transLogic = gl.getUniformLocation(program, 'translateXY')
+            var tmat = mat4.create();
+            var thetaP1 = Math.PI/300;
+            var theta = 0;
+            clear(gl, [1.0, 1.0, 1.0, 1.0]);
+            gl.drawArrays(gl.TRIANGLES, 0, data.length/7);
+            
+            var animation = ()=>{
+                
+                clear(gl, [1.0, 1.0, 1.0, 1.0]);
+                theta = theta + thetaP1;
+                var m = mat4.create();
+                
+                var r = mat4.rotate(mat4.create(), mat4.create(), theta, [0.1,0.1,0.1]);
+                var s = mat4.scale(mat4.create(), mat4.create(), [0.5,0.5,0.5]);
+                var t = mat4.translate(mat4.create(), mat4.create(), [0.0,0.0,0.0]);
+                
+                m = mat4.mul(m, t, mat4.mul(m, s, r)); 
+            
+                gl.uniformMatrix4fv(transLogic, false, m);
+                gl.drawArrays(gl.TRIANGLES, 0, data.length/7);
+
+                var r = mat4.rotate(mat4.create(), mat4.create(), theta, [0.1,0.3,-0.2]);
+                var s = mat4.scale(mat4.create(), mat4.create(), [0.3,0.3,0.3]);
+                var t = mat4.translate(mat4.create(), mat4.create(), [-0.7,-0.7,-0.4]);
+                
+                m = mat4.mul(m, t, mat4.mul(m, s, r)); 
+            
+                gl.uniformMatrix4fv(transLogic, false, m);
+                gl.drawArrays(gl.TRIANGLES, 0, data.length/7);
+
+                
+                var r = mat4.rotate(mat4.create(), mat4.create(), theta, [0.5,0.3,-0.2]);
+                var s = mat4.scale(mat4.create(), mat4.create(), [0.3,0.6,0.3]);
+                var t = mat4.translate(mat4.create(), mat4.create(), [0.6,0.6,0.4]);
+                
+                m = mat4.mul(m, t, mat4.mul(m, s, r)); 
+            
+                gl.uniformMatrix4fv(transLogic, false, m);
+                gl.drawArrays(gl.TRIANGLES, 0, data.length/7);
+                
+                var r = mat4.rotate(mat4.create(), mat4.create(), theta, [-1.0,-1.0,1.0]);
+                var s = mat4.scale(mat4.create(), mat4.create(), [0.2,0.2,0.2]);
+                var t = mat4.translate(mat4.create(), mat4.create(), [-0.6,0.7,-0.4]);
+                
+                m = mat4.mul(m, t, mat4.mul(m, s, r)); 
+            
+                gl.uniformMatrix4fv(transLogic, false, m);
+                gl.drawArrays(gl.TRIANGLES, 0, data.length/7);
+
+                var r = mat4.rotate(mat4.create(), mat4.create(), theta, [1.0,-1.0,1.0]);
+                var s = mat4.scale(mat4.create(), mat4.create(), [0.2,0.2,0.2]);
+                var t = mat4.translate(mat4.create(), mat4.create(), [0.6,-0.6,0.1]);
+                
+                m = mat4.mul(m, t, mat4.mul(m, s, r)); 
+            
+                gl.uniformMatrix4fv(transLogic, false, m);
+                gl.drawArrays(gl.TRIANGLES, 0, data.length/7);
+
+                window.requestAnimationFrame(animation);
+            };
+
+            animation();
+
+        });
+    </script>
+
+</body>
+
+</html>
